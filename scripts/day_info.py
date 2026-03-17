@@ -1,5 +1,6 @@
 from pathlib import Path
 import json
+import re
 import pandas as pd
 import gpxpy
 
@@ -165,45 +166,66 @@ def build_briefing(day_number: int, day_row, gpx_data: dict, hotel_row, highligh
     )
 
 
-def resolve_day_from_text(day_text: str, current_day: int) -> int | None:
-    cleaned = day_text.strip().lower()
+def extract_day_reference(user_input: str, current_day: int) -> int | None:
+    text = user_input.lower()
 
-    if cleaned == "vandaag":
+    if "vandaag" in text:
         return current_day
 
-    if cleaned == "morgen":
+    if "morgen" in text:
         return current_day + 1
 
-    if cleaned.isdigit():
-        return int(cleaned)
+    match = re.search(r"dag\s+(\d+)", text)
+    if match:
+        return int(match.group(1))
+
+    if text.strip().isdigit():
+        return int(text.strip())
+
+    standalone_number = re.search(r"\b(\d+)\b", text)
+    if standalone_number:
+        return int(standalone_number.group(1))
 
     return None
 
 
-def parse_user_input(user_input: str):
-    parts = user_input.strip().lower().split()
+def detect_intent(user_input: str) -> str | None:
+    text = user_input.lower().strip()
 
-    if not parts:
-        return None, None
+    if text in ["stop", "quit", "exit"]:
+        return "stop"
 
-    if user_input.strip().lower() == "stop":
-        return "stop", None
+    if text == "dag":
+        return "show_day"
 
-    if user_input.strip().lower() == "dag":
-        return "dag", None
+    if text.startswith("zet dag"):
+        return "set_day"
 
-    if len(parts) == 3 and parts[0] == "zet" and parts[1] == "dag" and parts[2].isdigit():
-        return "zet_dag", int(parts[2])
+    if any(word in text for word in ["hotel", "slapen", "overnachten"]):
+        return "hotel"
 
-    command = parts[0]
+    if any(word in text for word in ["highlight", "highlights", "stop", "fotoplek", "foto", "beziens", "mooi onderweg"]):
+        return "highlights"
 
-    if command not in ["briefing", "hotel", "highlights", "route"]:
-        return None, None
+    if any(word in text for word in ["route", "afstand", "rijden", "traject"]):
+        return "route"
 
-    if len(parts) >= 2:
-        return command, parts[1]
+    if any(word in text for word in ["briefing", "samenvatting", "vertel over", "wat mogen we verwachten"]):
+        return "briefing"
 
-    return command, None
+    return None
+
+
+def extract_set_day_value(user_input: str) -> int | None:
+    match = re.search(r"zet\s+dag\s+(\d+)", user_input.lower())
+    if match:
+        return int(match.group(1))
+    return None
+
+
+def ask_for_day_if_needed(current_day: int) -> int | None:
+    extra_input = input("Voor welke dag? ").strip()
+    return extract_day_reference(extra_input, current_day)
 
 
 def main():
@@ -230,40 +252,50 @@ def main():
     highlights_df = load_csv(highlights_csv_path)
     trip_days_df = load_csv(trip_days_csv_path)
 
-    print("Beschikbare commando's: briefing, hotel, highlights, route, dag, zet dag X, stop")
-    print("Voorbeelden: 'hotel vandaag', 'briefing morgen', 'route 1', 'zet dag 2'")
+    print("Je kan nu vrijer typen, bijvoorbeeld:")
+    print("- waar slapen we vandaag")
+    print("- geef briefing voor morgen")
+    print("- wat zijn de highlights van dag 1")
+    print("- toon route voor vandaag")
+    print("- dag")
+    print("- zet dag 2")
+    print("- stop")
 
     while True:
         current_day = get_current_day(settings_path)
-        user_input = input(f"\n[actieve dag: {current_day}] Wat wil je weten? ").strip()
+        user_input = input(f"\n[actieve dag: {current_day}] Vraag: ").strip()
 
-        command, raw_day_value = parse_user_input(user_input)
+        intent = detect_intent(user_input)
 
-        if command == "stop":
+        if intent == "stop":
             print("Tot later.")
             break
 
-        if command == "dag":
+        if intent == "show_day":
             print(f"De actieve dag is momenteel dag {current_day}.")
             continue
 
-        if command == "zet_dag":
-            set_current_day(settings_path, raw_day_value)
-            print(f"Actieve dag aangepast naar dag {raw_day_value}.")
+        if intent == "set_day":
+            new_day = extract_set_day_value(user_input)
+            if new_day is None:
+                print("Gebruik bijvoorbeeld: zet dag 2")
+                continue
+
+            set_current_day(settings_path, new_day)
+            print(f"Actieve dag aangepast naar dag {new_day}.")
             continue
 
-        if command is None:
-            print("Onbekend commando. Gebruik bijvoorbeeld: 'hotel vandaag', 'briefing morgen', 'route 1', 'zet dag 2'")
+        if intent is None:
+            print("Ik snap de vraag nog niet goed. Probeer iets zoals 'waar slapen we vandaag' of 'geef briefing voor dag 2'.")
             continue
 
-        if raw_day_value is None:
-            extra_input = input("Voor welke dag? ").strip()
-            day_number = resolve_day_from_text(extra_input, current_day)
-        else:
-            day_number = resolve_day_from_text(str(raw_day_value), current_day)
+        day_number = extract_day_reference(user_input, current_day)
 
         if day_number is None:
-            print("Ik begrijp de dag niet. Gebruik bijvoorbeeld: vandaag, morgen, 1, 2 ...")
+            day_number = ask_for_day_if_needed(current_day)
+
+        if day_number is None:
+            print("Ik begrijp niet voor welke dag je info wil. Gebruik bijvoorbeeld: vandaag, morgen, dag 2 ...")
             continue
 
         gpx_path = project_root / "data" / "gpx" / f"day_{day_number}.gpx"
@@ -279,14 +311,14 @@ def main():
 
         print()
 
-        if command == "briefing":
-            print(build_briefing(day_number, day_row, gpx_data, hotel_row, highlights))
-        elif command == "hotel":
+        if intent == "hotel":
             print(build_hotel_text(hotel_row))
-        elif command == "highlights":
+        elif intent == "highlights":
             print(build_highlights_text(highlights))
-        elif command == "route":
+        elif intent == "route":
             print(build_route_text(day_number, day_row, gpx_data))
+        elif intent == "briefing":
+            print(build_briefing(day_number, day_row, gpx_data, hotel_row, highlights))
 
 
 if __name__ == "__main__":
