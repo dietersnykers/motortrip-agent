@@ -42,11 +42,11 @@ def load_gpx_data(gpx_path: Path) -> dict:
     }
 
 
-def get_day_hotel(hotels_df: pd.DataFrame, day_number: int):
-    hotel = hotels_df[hotels_df["day_number"] == day_number]
-    if hotel.empty:
+def get_row_for_day(df: pd.DataFrame, day_number: int):
+    row = df[df["day_number"] == day_number]
+    if row.empty:
         return None
-    return hotel.iloc[0]
+    return row.iloc[0]
 
 
 def get_day_highlights(highlights_df: pd.DataFrame, day_number: int) -> list:
@@ -98,19 +98,36 @@ def build_highlights_text(highlights: list) -> str:
     return "\n".join(lines)
 
 
-def build_briefing(day_number: int, gpx_data: dict, hotel_row, highlights: list) -> str:
+def build_briefing(day_number: int, day_row, gpx_data: dict, hotel_row, highlights: list) -> str:
     distance_km = gpx_data["distance_km"]
     route_character = estimate_route_character(distance_km)
     hotel_text = build_hotel_text(hotel_row)
     highlights_text = build_highlights_text(highlights)
 
+    title = f"Dag {day_number}"
+    start_name = "Onbekende startplaats"
+    end_name = "Onbekende eindplaats"
+    region_summary = "Geen extra routesamenvatting beschikbaar."
+    ride_style = "Rijdag"
+
+    if day_row is not None:
+        title = day_row["title"]
+        start_name = day_row["start_name"]
+        end_name = day_row["end_name"]
+        region_summary = day_row["region_summary"]
+        ride_style = day_row["ride_style"]
+
     briefing = f"""
-Dag {day_number}
+Dag {day_number} — {title}
+
+Start: {start_name}
+Einde: {end_name}
 
 Vandaag rijden we ongeveer {distance_km} km. Dit is {route_character}.
+Type dag: {ride_style}
 
-Startcoördinaten: {gpx_data['start_lat']}, {gpx_data['start_lon']}
-Eindcoördinaten: {gpx_data['end_lat']}, {gpx_data['end_lon']}
+Route
+{region_summary}
 
 Hotel
 {hotel_text}
@@ -130,6 +147,7 @@ def main():
 
     hotels_csv_path = project_root / "data" / "sample" / "hotels_example.csv"
     highlights_csv_path = project_root / "data" / "sample" / "highlights_example.csv"
+    trip_days_csv_path = project_root / "data" / "sample" / "trip_days_example.csv"
 
     try:
         day_number = int(input("Welke dag wil je bekijken? ").strip())
@@ -151,14 +169,20 @@ def main():
         print(f"Geen highlights-bestand gevonden: {highlights_csv_path}")
         return
 
+    if not trip_days_csv_path.exists():
+        print(f"Geen trip_days-bestand gevonden: {trip_days_csv_path}")
+        return
+
     hotels_df = load_csv(hotels_csv_path)
     highlights_df = load_csv(highlights_csv_path)
+    trip_days_df = load_csv(trip_days_csv_path)
 
     gpx_data = load_gpx_data(gpx_path)
-    hotel_row = get_day_hotel(hotels_df, day_number)
+    hotel_row = get_row_for_day(hotels_df, day_number)
+    day_row = get_row_for_day(trip_days_df, day_number)
     highlights = get_day_highlights(highlights_df, day_number)
 
-    briefing = build_briefing(day_number, gpx_data, hotel_row, highlights)
+    briefing = build_briefing(day_number, day_row, gpx_data, hotel_row, highlights)
 
     print("\n" + briefing)
 
