@@ -98,11 +98,9 @@ def build_highlights_text(highlights: list) -> str:
     return "\n".join(lines)
 
 
-def build_briefing(day_number: int, day_row, gpx_data: dict, hotel_row, highlights: list) -> str:
+def build_route_text(day_number: int, day_row, gpx_data: dict) -> str:
     distance_km = gpx_data["distance_km"]
     route_character = estimate_route_character(distance_km)
-    hotel_text = build_hotel_text(hotel_row)
-    highlights_text = build_highlights_text(highlights)
 
     title = f"Dag {day_number}"
     start_name = "Onbekende startplaats"
@@ -117,29 +115,39 @@ def build_briefing(day_number: int, day_row, gpx_data: dict, hotel_row, highligh
         region_summary = day_row["region_summary"]
         ride_style = day_row["ride_style"]
 
-    briefing = f"""
-Dag {day_number} — {title}
+    return (
+        f"Dag {day_number} — {title}\n\n"
+        f"Start: {start_name}\n"
+        f"Einde: {end_name}\n\n"
+        f"Afstand: ongeveer {distance_km} km\n"
+        f"Type dag: {ride_style}\n"
+        f"Routekarakter: {route_character}\n\n"
+        f"Route\n{region_summary}"
+    )
 
-Start: {start_name}
-Einde: {end_name}
 
-Vandaag rijden we ongeveer {distance_km} km. Dit is {route_character}.
-Type dag: {ride_style}
+def build_briefing(day_number: int, day_row, gpx_data: dict, hotel_row, highlights: list) -> str:
+    route_text = build_route_text(day_number, day_row, gpx_data)
+    hotel_text = build_hotel_text(hotel_row)
+    highlights_text = build_highlights_text(highlights)
 
-Route
-{region_summary}
+    return (
+        f"{route_text}\n\n"
+        f"Hotel\n{hotel_text}\n\n"
+        f"Highlights\n{highlights_text}\n\n"
+        f"Kort samengevat:\n"
+        f"Een route om van te genieten, met genoeg reden om onderweg af en toe af te stappen voor koffie, foto's en uitzicht."
+    )
 
-Hotel
-{hotel_text}
 
-Highlights
-{highlights_text}
+def ask_day_number() -> int:
+    while True:
+        user_input = input("Voor welke dag? ").strip()
 
-Kort samengevat:
-Een route om van te genieten, met genoeg reden om onderweg af en toe af te stappen voor koffie, foto's en uitzicht.
-""".strip()
+        if user_input.isdigit():
+            return int(user_input)
 
-    return briefing
+        print("Geef een geldig dagnummer in, bijvoorbeeld 1 of 2.")
 
 
 def main():
@@ -148,18 +156,6 @@ def main():
     hotels_csv_path = project_root / "data" / "sample" / "hotels_example.csv"
     highlights_csv_path = project_root / "data" / "sample" / "highlights_example.csv"
     trip_days_csv_path = project_root / "data" / "sample" / "trip_days_example.csv"
-
-    try:
-        day_number = int(input("Welke dag wil je bekijken? ").strip())
-    except ValueError:
-        print("Geef een geldig getal in, bijvoorbeeld 1 of 2.")
-        return
-
-    gpx_path = project_root / "data" / "gpx" / f"day_{day_number}.gpx"
-
-    if not gpx_path.exists():
-        print(f"Geen GPX-bestand gevonden voor dag {day_number}: {gpx_path}")
-        return
 
     if not hotels_csv_path.exists():
         print(f"Geen hotelbestand gevonden: {hotels_csv_path}")
@@ -177,14 +173,41 @@ def main():
     highlights_df = load_csv(highlights_csv_path)
     trip_days_df = load_csv(trip_days_csv_path)
 
-    gpx_data = load_gpx_data(gpx_path)
-    hotel_row = get_row_for_day(hotels_df, day_number)
-    day_row = get_row_for_day(trip_days_df, day_number)
-    highlights = get_day_highlights(highlights_df, day_number)
+    print("Beschikbare commando's: briefing, hotel, highlights, route, stop")
+    
+    while True:
+        command = input("\nWat wil je weten? ").strip().lower()
 
-    briefing = build_briefing(day_number, day_row, gpx_data, hotel_row, highlights)
+        if command == "stop":
+            print("Tot later.")
+            break
 
-    print("\n" + briefing)
+        if command not in ["briefing", "hotel", "highlights", "route"]:
+            print("Onbekend commando. Kies uit: briefing, hotel, highlights, route, stop")
+            continue
+
+        day_number = ask_day_number()
+        gpx_path = project_root / "data" / "gpx" / f"day_{day_number}.gpx"
+
+        if not gpx_path.exists():
+            print(f"Geen GPX-bestand gevonden voor dag {day_number}: {gpx_path}")
+            continue
+
+        gpx_data = load_gpx_data(gpx_path)
+        hotel_row = get_row_for_day(hotels_df, day_number)
+        day_row = get_row_for_day(trip_days_df, day_number)
+        highlights = get_day_highlights(highlights_df, day_number)
+
+        print()
+
+        if command == "briefing":
+            print(build_briefing(day_number, day_row, gpx_data, hotel_row, highlights))
+        elif command == "hotel":
+            print(build_hotel_text(hotel_row))
+        elif command == "highlights":
+            print(build_highlights_text(highlights))
+        elif command == "route":
+            print(build_route_text(day_number, day_row, gpx_data))
 
 
 if __name__ == "__main__":
