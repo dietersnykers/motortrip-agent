@@ -2,6 +2,8 @@ from pathlib import Path
 import pandas as pd
 import gpxpy
 
+CURRENT_DAY = 1
+
 
 def load_csv(csv_path: Path) -> pd.DataFrame:
     return pd.read_csv(csv_path)
@@ -140,14 +142,40 @@ def build_briefing(day_number: int, day_row, gpx_data: dict, hotel_row, highligh
     )
 
 
-def ask_day_number() -> int:
-    while True:
-        user_input = input("Voor welke dag? ").strip()
+def resolve_day_from_text(day_text: str) -> int | None:
+    cleaned = day_text.strip().lower()
 
-        if user_input.isdigit():
-            return int(user_input)
+    if cleaned == "vandaag":
+        return CURRENT_DAY
 
-        print("Geef een geldig dagnummer in, bijvoorbeeld 1 of 2.")
+    if cleaned == "morgen":
+        return CURRENT_DAY + 1
+
+    if cleaned.isdigit():
+        return int(cleaned)
+
+    return None
+
+
+def parse_user_input(user_input: str):
+    parts = user_input.strip().lower().split()
+
+    if not parts:
+        return None, None
+
+    command = parts[0]
+
+    if command == "stop":
+        return "stop", None
+
+    if command not in ["briefing", "hotel", "highlights", "route"]:
+        return None, None
+
+    if len(parts) >= 2:
+        day_number = resolve_day_from_text(parts[1])
+        return command, day_number
+
+    return command, None
 
 
 def main():
@@ -174,19 +202,28 @@ def main():
     trip_days_df = load_csv(trip_days_csv_path)
 
     print("Beschikbare commando's: briefing, hotel, highlights, route, stop")
-    
+    print("Voorbeelden: 'hotel vandaag', 'briefing morgen', 'route 1'")
+
     while True:
-        command = input("\nWat wil je weten? ").strip().lower()
+        user_input = input("\nWat wil je weten? ").strip()
+        command, day_number = parse_user_input(user_input)
 
         if command == "stop":
             print("Tot later.")
             break
 
-        if command not in ["briefing", "hotel", "highlights", "route"]:
-            print("Onbekend commando. Kies uit: briefing, hotel, highlights, route, stop")
+        if command is None:
+            print("Onbekend commando. Gebruik bijvoorbeeld: 'hotel vandaag', 'briefing morgen', 'route 1'")
             continue
 
-        day_number = ask_day_number()
+        if day_number is None:
+            extra_input = input("Voor welke dag? ").strip()
+            day_number = resolve_day_from_text(extra_input)
+
+        if day_number is None:
+            print("Ik begrijp de dag niet. Gebruik bijvoorbeeld: vandaag, morgen, 1, 2 ...")
+            continue
+
         gpx_path = project_root / "data" / "gpx" / f"day_{day_number}.gpx"
 
         if not gpx_path.exists():
