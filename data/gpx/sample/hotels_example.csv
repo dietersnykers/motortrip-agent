@@ -1,0 +1,3 @@
+day_number,date,hotel_name,city,address,booking_url,website_url,checkin_notes,parking_notes,lat,lon
+1,2026-06-12,Hotel Cochem,Cochem,Moselstraat 1,https://link.com,https://site.com,Check-in 15u,Parking ok,50.14,7.16
+2,2026-06-13,Hotel Colmar,Colmar,Route 2,https://link.com,https://site.com,Check-in 16u,Garage,48.07,7.35
