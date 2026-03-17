@@ -1,26 +1,25 @@
 from pathlib import Path
 import gpxpy
 
-# bepaal project root
 project_root = Path(__file__).resolve().parent.parent
-
 gpx_file = project_root / "data" / "gpx" / "day_1.gpx"
-
-print(f"GPX bestand: {gpx_file}")
 
 with open(gpx_file, "r") as f:
     gpx = gpxpy.parse(f)
 
+distance = 0.0
 points = []
 
 for track in gpx.tracks:
     for segment in track.segments:
-        for point in segment.points:
-            points.append(point)
+        distance += segment.length_3d()
+        points.extend(segment.points)
 
+print(f"GPX bestand: {gpx_file}")
 print(f"Aantal punten: {len(points)}")
+print(f"Totale afstand: {distance / 1000:.1f} km")
 
-if len(points) > 0:
+if points:
     start = points[0]
     end = points[-1]
 
