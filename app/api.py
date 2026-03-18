@@ -58,3 +58,35 @@ def ask(request: AskRequest):
             success=False,
             error=str(e),
         )
+    
+class WhatsAppRequest(BaseModel):
+    message: str
+    user: str | None = "default"
+
+
+@app.post("/whatsapp")
+def whatsapp(request: WhatsAppRequest):
+    project_root = Path(__file__).resolve().parent.parent
+
+    print(f"[WHATSAPP] user={request.user} message={request.message}")
+
+    try:
+        result = answer_question(request.message, project_root)
+
+        reply_text = result.get("answer", "Geen antwoord beschikbaar.")
+
+        return {
+            "reply": reply_text,
+            "meta": {
+                "intent": result.get("intent"),
+                "day": result.get("day_number"),
+            },
+        }
+
+    except Exception as e:
+        print(f"[WHATSAPP ERROR] {str(e)}")
+
+        return {
+            "reply": "Er ging iets mis bij het verwerken van je bericht.",
+            "error": str(e),
+        }
