@@ -21,24 +21,43 @@ from app.responses import (
 
 
 def get_project_paths(project_root: Path) -> dict:
+    # check of we op Railway zitten (volume bestaat)
+    data_root = Path("/data") if Path("/data").exists() else project_root / "data" / "imports"
+
     return {
         "hotels_csv": project_root / "data" / "imports" / "hotels.csv",
         "highlights_csv": project_root / "data" / "imports" / "highlights.csv",
         "trip_days_csv": project_root / "data" / "imports" / "trip_days.csv",
-        "settings_json": project_root / "data" / "imports" / "settings.json",
-        "conversations_json": project_root / "data" / "imports" / "conversations.json",
+        "settings_json": data_root / "settings.json",
+        "conversations_json": data_root / "conversations.json",
     }
 
 
 def load_all_data(project_root: Path) -> dict:
     paths = get_project_paths(project_root)
 
+    settings_path = paths["settings_json"]
+    conversations_path = paths["conversations_json"]
+
+    # 👉 NIEUW: zorg dat bestanden bestaan (voor Railway volume)
+    if not settings_path.exists():
+        print(f"[INIT] maak settings.json aan op {settings_path}")
+        settings_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(settings_path, "w") as f:
+            f.write('{"users": {}}')
+
+    if not conversations_path.exists():
+        print(f"[INIT] maak conversations.json aan op {conversations_path}")
+        conversations_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(conversations_path, "w") as f:
+            f.write('{"users": {}}')
+
     return {
         "hotels_df": load_csv(paths["hotels_csv"]),
         "highlights_df": load_csv(paths["highlights_csv"]),
         "trip_days_df": load_csv(paths["trip_days_csv"]),
-        "settings_path": paths["settings_json"],
-        "conversations_path": paths["conversations_json"],
+        "settings_path": settings_path,
+        "conversations_path": conversations_path,
     }
 
 
