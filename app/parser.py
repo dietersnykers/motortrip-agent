@@ -30,6 +30,9 @@ def detect_intent(user_input: str) -> str | None:
     if text in ["stop", "quit", "exit"]:
         return "stop"
 
+    if text in ["help", "hulp", "wat kan je", "wat kun je", "help me"]:
+        return "help"
+
     if text == "dag":
         return "show_day"
 

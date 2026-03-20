@@ -71,3 +71,95 @@ def build_briefing(day_number: int, day_row, gpx_data: dict, hotel_row, highligh
         f"Kort samengevat:\n"
         f"Een route om van te genieten, met genoeg reden om onderweg af en toe af te stappen voor koffie, foto's en uitzicht."
     )
+
+def build_help_text() -> str:
+    return (
+        "Ik kan je helpen met info over de reis.\n\n"
+        "Voorbeelden:\n"
+        "- waar slapen we vandaag\n"
+        "- geef briefing voor morgen\n"
+        "- wat zijn de highlights vandaag\n"
+        "- toon route voor dag 2\n"
+        "- dag\n"
+        "- zet dag 2"
+    )
+
+
+def build_unknown_question_text() -> str:
+    return (
+        "Die vraag snap ik nog niet helemaal.\n\n"
+        "Probeer bijvoorbeeld:\n"
+        "- waar slapen we vandaag\n"
+        "- briefing morgen\n"
+        "- highlights dag 2\n"
+        "- zet dag 2"
+    )
+
+
+def build_missing_day_text(intent: str | None) -> str:
+    if intent == "hotel":
+        return "Voor welke dag wil je hotelinfo? Bijvoorbeeld: vandaag, morgen of dag 2."
+    if intent == "briefing":
+        return "Voor welke dag wil je een briefing? Bijvoorbeeld: vandaag, morgen of dag 2."
+    if intent == "route":
+        return "Voor welke dag wil je route-info? Bijvoorbeeld: vandaag, morgen of dag 2."
+    if intent == "highlights":
+        return "Voor welke dag wil je de highlights? Bijvoorbeeld: vandaag, morgen of dag 2."
+
+    return "Voor welke dag wil je info? Bijvoorbeeld: vandaag, morgen of dag 2."
+
+
+def build_short_hotel_text(hotel_row) -> str:
+    if hotel_row is None:
+        return "Ik vond geen hotelinfo voor die dag."
+
+    return (
+        f"🏨 {hotel_row['hotel_name']} — {hotel_row['city']}\n"
+        f"📍 {hotel_row['address']}\n"
+        f"🔗 {hotel_row['booking_url']}"
+    )
+
+
+def build_short_highlights_text(highlights: list) -> str:
+    if not highlights:
+        return "Nog geen highlights ingevoerd voor deze dag."
+
+    lines = ["⭐ Highlights van die dag:"]
+    for item in highlights[:3]:
+        lines.append(f"- {item['name']}")
+
+    return "\n".join(lines)
+
+
+def build_short_route_text(day_number: int, day_row, gpx_data: dict) -> str:
+    distance_km = gpx_data["distance_km"]
+
+    title = f"Dag {day_number}"
+    start_name = "Onbekende startplaats"
+    end_name = "Onbekende eindplaats"
+
+    if day_row is not None:
+        title = day_row["title"]
+        start_name = day_row["start_name"]
+        end_name = day_row["end_name"]
+
+    return (
+        f"🛣️ {title}\n"
+        f"Van {start_name} naar {end_name}\n"
+        f"Afstand: ongeveer {distance_km} km"
+    )
+
+
+def build_short_briefing(day_number: int, day_row, gpx_data: dict, hotel_row, highlights: list) -> str:
+    route_text = build_short_route_text(day_number, day_row, gpx_data)
+    hotel_text = build_short_hotel_text(hotel_row)
+
+    highlight_line = "Geen highlights ingevoerd."
+    if highlights:
+        highlight_line = f"⭐ Tip: {highlights[0]['name']}"
+
+    return (
+        f"{route_text}\n\n"
+        f"{hotel_text}\n\n"
+        f"{highlight_line}"
+    )

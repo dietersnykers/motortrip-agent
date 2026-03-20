@@ -1,0 +1,9 @@
+day_number,date,hotel_name,city,address,booking_url,website_url,checkin_notes,parking_notes,lat,lon
+1,2026-07-26,Hotel Zur Dorfschänke,Klotten,Hauptstraße 82-83 56818 Klotten Duitsland,https://www.booking.com/hotel/de/pension-dorfschaenke.nl.html,https://www.dorfschaenke.eu/nl/,in te checken om 17:00 - 18:00,Afgesloten parkeerplaats,50.16415333498752,7.199721842375693
+2,2026-07-27,Hotel l'Aubergade,Gérardmer,20 Place des Déportés 88400 Gérardmer Frankrijk,https://www.booking.com/hotel/fr/restaurant-l-aubergade.nl.html,https://www.laubergade-gerardmer.fr/,in te checken om 17:00 - 18:01,Op terrein voor hotel,,
+3,2026-07-28,Hotel Drei Könige ,Entlebuch,Dorf 27 6162 Entlebuch Zwitserland,https://www.booking.com/hotel/ch/landgasthof-drei-kapnige.nl.html,https://www.3koenige-entlebuch.ch/,in te checken om 17:00 - 18:02,Bij hotel,,
+4,2026-07-29,Perla Valsole,Acquarossa,Via Lucomagno 120 6722 Acquarossa Zwitserland,https://www.booking.com/hotel/ch/perla-valsole-ristorante.nl.html,https://perlavalsole.ch/en/,in te checken om 17:00 - 18:03,Bij hotel,46.45904189171467,8.941558720441094
+5,2026-07-30,Hotel Teola,Livigno,Via Parè 110  20162 Livigno Italië,https://www.booking.com/hotel/it/teola.nl.html,https://www.hotelteola.com/en/,in te checken om 17:00 - 18:04,Bij hotel,46.539216406028444,10.14183666919061
+6,2026-07-31,Hotel Almina,Ratschings,Val di Mezzo 12 39040 Ratschings Italië,https://www.booking.com/hotel/it/alpenhof.nl.html,https://www.almina.it/,in te checken om 17:00 - 18:05,Bij hotel,,
+7,2026-08-01,Hotel Almina,Ratschings,Val di Mezzo 12 39040 Ratschings Italië,https://www.booking.com/hotel/it/alpenhof.nl.html,https://www.almina.it/,in te checken om 17:00 - 18:06,Bij hotel,,
+8,2026-08-02,Not booked,,,,,,,,
