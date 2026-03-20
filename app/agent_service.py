@@ -20,6 +20,10 @@ from app.responses import (
     build_raw_facts_for_briefing,
     build_raw_facts_for_advice,
     build_short_advice_text,
+    build_raw_facts_for_morning,
+    build_short_morning_text,
+    build_raw_facts_for_stops,
+    build_short_stops_text,
 )
 
 
@@ -224,14 +228,30 @@ def answer_question(question: str, project_root: Path, user: str = "default") ->
         raw_facts = build_raw_facts_for_briefing(day_number, day_row, gpx_data, hotel_row, highlights)
         answer = format_with_llm("briefing", raw_facts) or build_short_briefing(day_number, day_row, gpx_data, hotel_row, highlights)
 
+    elif intent == "coffee":
+        raw_facts = build_raw_facts_for_stops(day_number, day_row, gpx_data, highlights, stop_type="coffee")
+        answer = format_with_llm("coffee", raw_facts) or build_short_stops_text(highlights, stop_type="coffee")
+
+    elif intent == "lunch":
+        raw_facts = build_raw_facts_for_stops(day_number, day_row, gpx_data, highlights, stop_type="lunch")
+        answer = format_with_llm("lunch", raw_facts) or build_short_stops_text(highlights, stop_type="lunch")
+
+    elif intent == "stops":
+        raw_facts = build_raw_facts_for_stops(day_number, day_row, gpx_data, highlights, stop_type="general")
+        answer = format_with_llm("stops", raw_facts) or build_short_stops_text(highlights, stop_type="general")
+
     elif intent == "advice":
         raw_facts = build_raw_facts_for_advice(day_number, day_row, gpx_data, hotel_row, highlights)
         answer = format_with_llm("advice", raw_facts) or build_short_advice_text(day_number, day_row, gpx_data, hotel_row, highlights)
 
+    elif intent == "morning":
+        raw_facts = build_raw_facts_for_morning(day_number, day_row, gpx_data, hotel_row, highlights)
+        answer = format_with_llm("morning", raw_facts) or build_short_morning_text(day_number, day_row, gpx_data, hotel_row, highlights)
+
     else:
         answer = "Ik heb nog geen antwoord voor die vraag."
 
-    if intent in ["hotel", "highlights", "route", "briefing", "advice"]:
+    if intent in ["hotel", "highlights", "route", "briefing", "advice","morning"]:
         set_user_context(
             conversations_path=conversations_path,
             user=user,

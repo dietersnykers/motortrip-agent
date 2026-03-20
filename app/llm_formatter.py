@@ -32,6 +32,8 @@ Regels:
 - Voor hotel/route/highlights: maximaal ongeveer 5 regels.
 - Voor briefing: compact, maar wel iets vloeiender.
 - Voor advice: geef 3 korte, concrete tips of aandachtspunten.
+- Voor morning: geef een compacte ochtendbriefing voor motorrijders met routegevoel, 1 highlight, praktisch advies en hotelinfo.
+- Voor coffee/lunch/stops: geef 2 à 3 concrete suggesties of stopadvies in korte WhatsApp-stijl.
 
 Type antwoord: {intent}
 

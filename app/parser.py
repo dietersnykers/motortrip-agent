@@ -29,6 +29,12 @@ def detect_intent(user_input: str) -> str | None:
 
     if text in ["stop", "quit", "exit"]:
         return "stop"
+    
+    if text in ["goedemorgen", "morning", "dagstart", "start de dag", "ochtendbriefing"]:
+        return "morning"
+    
+    if any(phrase in text for phrase in ["goedemorgen", "dagstart", "ochtendbriefing", "start van de dag"]):
+        return "morning"
 
     if text in ["help", "hulp", "wat kan je", "wat kun je", "help me"]:
         return "help"
@@ -41,6 +47,15 @@ def detect_intent(user_input: str) -> str | None:
 
     if any(word in text for word in ["hotel", "slapen", "overnachten"]):
         return "hotel"
+    
+    if any(word in text for word in ["koffie", "koffiestop", "koffiepauze"]):
+        return "coffee"
+
+    if any(word in text for word in ["lunch", "lunchen", "middageten", "eten onderweg"]):
+        return "lunch"
+
+    if any(word in text for word in ["stop", "stoppen", "pauze", "tussenstop"]):
+        return "stops"
 
     if any(word in text for word in ["highlight", "highlights", "fotoplek", "foto", "beziens", "mooi onderweg"]):
         return "highlights"
@@ -53,6 +68,8 @@ def detect_intent(user_input: str) -> str | None:
 
     if any(word in text for word in ["briefing", "samenvatting", "vertel over", "wat mogen we verwachten"]):
         return "briefing"
+    
+
 
     return None
 

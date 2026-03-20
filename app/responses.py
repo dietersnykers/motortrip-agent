@@ -286,3 +286,74 @@ def build_raw_facts_for_briefing(day_number: int, day_row, gpx_data: dict, hotel
         f"HOTEL\n{hotel_facts}\n\n"
         f"HIGHLIGHTS\n{highlights_facts}"
     )
+
+def build_raw_facts_for_morning(day_number: int, day_row, gpx_data: dict, hotel_row, highlights: list) -> str:
+    route_facts = build_raw_facts_for_route(day_number, day_row, gpx_data)
+    hotel_facts = build_raw_facts_for_hotel(hotel_row)
+    highlights_facts = build_raw_facts_for_highlights(highlights)
+    advice_facts = build_raw_facts_for_advice(day_number, day_row, gpx_data, hotel_row, highlights)
+
+    return (
+        f"GOEDEMORGEN BRIEFING\n\n"
+        f"ROUTE\n{route_facts}\n\n"
+        f"HOTEL\n{hotel_facts}\n\n"
+        f"HIGHLIGHTS\n{highlights_facts}\n\n"
+        f"ADVIES\n{advice_facts}"
+    )
+
+
+def build_short_morning_text(day_number: int, day_row, gpx_data: dict, hotel_row, highlights: list) -> str:
+    route_text = build_short_route_text(day_number, day_row, gpx_data)
+    hotel_text = build_short_hotel_text(hotel_row)
+
+    highlight_line = "Nog geen highlight ingevoerd."
+    if highlights:
+        highlight_line = f"Leuke stop vandaag: {highlights[0]['name']}"
+
+    return (
+        f"Goedemorgen.\n\n"
+        f"{route_text}\n\n"
+        f"{highlight_line}\n\n"
+        f"{hotel_text}"
+    )
+def build_raw_facts_for_stops(day_number: int, day_row, gpx_data: dict, highlights: list, stop_type: str = "general") -> str:
+    distance_km = gpx_data["distance_km"]
+
+    title = f"Dag {day_number}"
+    region_summary = "Geen extra routesamenvatting beschikbaar."
+
+    if day_row is not None:
+        title = day_row["title"]
+        region_summary = day_row["region_summary"]
+
+    highlight_lines = "Geen highlights beschikbaar."
+    if highlights:
+        lines = []
+        for item in highlights[:5]:
+            lines.append(f"- {item['name']} ({item['type']}): {item['description']}")
+        highlight_lines = "\n".join(lines)
+
+    return (
+        f"Dag: {title}\n"
+        f"Afstand: {distance_km} km\n"
+        f"Type vraag: {stop_type}\n"
+        f"Route samenvatting: {region_summary}\n\n"
+        f"Beschikbare highlights:\n{highlight_lines}"
+    )
+
+
+def build_short_stops_text(highlights: list, stop_type: str = "general") -> str:
+    if not highlights:
+        return "Ik heb nog geen goede stopinfo voor deze dag."
+
+    title = "Mogelijke stops:"
+    if stop_type == "coffee":
+        title = "Mogelijke koffiestops:"
+    elif stop_type == "lunch":
+        title = "Mogelijke lunchstops:"
+
+    lines = [title]
+    for item in highlights[:3]:
+        lines.append(f"- {item['name']}")
+
+    return "\n".join(lines)
