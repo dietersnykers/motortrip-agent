@@ -1,15 +1,12 @@
 from pathlib import Path
 from app.llm_parser import parse_with_llm, resolve_llm_day
+from app.llm_formatter import format_with_llm
 from app.data_loader import load_csv, get_row_for_day, get_day_highlights
 from app.gpx_utils import load_gpx_data
 from app.settings import get_current_day, set_current_day
 from app.conversation_state import get_user_context, set_user_context
 from app.parser import detect_intent, extract_day_reference, extract_set_day_value
 from app.responses import (
-    build_hotel_text,
-    build_highlights_text,
-    build_route_text,
-    build_briefing,
     build_help_text,
     build_unknown_question_text,
     build_missing_day_text,
@@ -17,7 +14,14 @@ from app.responses import (
     build_short_highlights_text,
     build_short_route_text,
     build_short_briefing,
+    build_raw_facts_for_hotel,
+    build_raw_facts_for_highlights,
+    build_raw_facts_for_route,
+    build_raw_facts_for_briefing,
+    build_raw_facts_for_advice,
+    build_short_advice_text,
 )
+
 
 
 def get_project_paths(project_root: Path) -> dict:
@@ -179,9 +183,6 @@ def answer_question(question: str, project_root: Path, user: str = "default") ->
     if day_number is None and last_day_number is not None and intent == last_intent:
         day_number = last_day_number
 
-    if day_number is None and llm_parsed:
-        day_number = resolve_llm_day(llm_parsed, current_day)
-
     if day_number is None:
         return {
             "answer": build_missing_day_text(intent),
@@ -208,23 +209,36 @@ def answer_question(question: str, project_root: Path, user: str = "default") ->
     highlights = get_day_highlights(highlights_df, day_number)
 
     if intent == "hotel":
-        answer = build_short_hotel_text(hotel_row)
+        raw_facts = build_raw_facts_for_hotel(hotel_row)
+        answer = format_with_llm("hotel", raw_facts) or build_short_hotel_text(hotel_row)
+
     elif intent == "highlights":
-        answer = build_short_highlights_text(highlights)
+        raw_facts = build_raw_facts_for_highlights(highlights)
+        answer = format_with_llm("highlights", raw_facts) or build_short_highlights_text(highlights)
+
     elif intent == "route":
-        answer = build_short_route_text(day_number, day_row, gpx_data)
+        raw_facts = build_raw_facts_for_route(day_number, day_row, gpx_data)
+        answer = format_with_llm("route", raw_facts) or build_short_route_text(day_number, day_row, gpx_data)
+
     elif intent == "briefing":
-        answer = build_short_briefing(day_number, day_row, gpx_data, hotel_row, highlights)
+        raw_facts = build_raw_facts_for_briefing(day_number, day_row, gpx_data, hotel_row, highlights)
+        answer = format_with_llm("briefing", raw_facts) or build_short_briefing(day_number, day_row, gpx_data, hotel_row, highlights)
+
+    elif intent == "advice":
+        raw_facts = build_raw_facts_for_advice(day_number, day_row, gpx_data, hotel_row, highlights)
+        answer = format_with_llm("advice", raw_facts) or build_short_advice_text(day_number, day_row, gpx_data, hotel_row, highlights)
+
     else:
         answer = "Ik heb nog geen antwoord voor die vraag."
 
-    set_user_context(
-        conversations_path=conversations_path,
-        user=user,
-        last_intent=intent,
-        last_day_number=day_number,
-        last_question=question,
-    )    
+    if intent in ["hotel", "highlights", "route", "briefing", "advice"]:
+        set_user_context(
+            conversations_path=conversations_path,
+            user=user,
+            last_intent=intent,
+            last_day_number=day_number,
+            last_question=question,
+        )
 
     return {
         "answer": answer,

@@ -163,3 +163,126 @@ def build_short_briefing(day_number: int, day_row, gpx_data: dict, hotel_row, hi
         f"{hotel_text}\n\n"
         f"{highlight_line}"
     )
+
+def build_raw_facts_for_advice(day_number: int, day_row, gpx_data: dict, hotel_row, highlights: list) -> str:
+    distance_km = gpx_data["distance_km"]
+
+    title = f"Dag {day_number}"
+    start_name = "Onbekende startplaats"
+    end_name = "Onbekende eindplaats"
+    region_summary = "Geen extra routesamenvatting beschikbaar."
+    ride_style = "Rijdag"
+
+    if day_row is not None:
+        title = day_row["title"]
+        start_name = day_row["start_name"]
+        end_name = day_row["end_name"]
+        region_summary = day_row["region_summary"]
+        ride_style = day_row["ride_style"]
+
+    hotel_info = "Geen hotelinformatie beschikbaar."
+    if hotel_row is not None:
+        hotel_info = (
+            f"Hotel: {hotel_row['hotel_name']} in {hotel_row['city']}. "
+            f"Check-in: {hotel_row['checkin_notes']}. "
+            f"Parking: {hotel_row['parking_notes']}."
+        )
+
+    highlights_info = "Geen highlights beschikbaar."
+    if highlights:
+        highlight_lines = [f"- {item['name']}: {item['description']}" for item in highlights[:3]]
+        highlights_info = "\n".join(highlight_lines)
+
+    return (
+        f"Dag: {title}\n"
+        f"Start: {start_name}\n"
+        f"Einde: {end_name}\n"
+        f"Afstand: {distance_km} km\n"
+        f"Type dag: {ride_style}\n"
+        f"Route samenvatting: {region_summary}\n\n"
+        f"{hotel_info}\n\n"
+        f"Highlights:\n{highlights_info}"
+    )
+
+
+def build_short_advice_text(day_number: int, day_row, gpx_data: dict, hotel_row, highlights: list) -> str:
+    distance_km = gpx_data["distance_km"]
+
+    advice_lines = []
+
+    if distance_km < 180:
+        advice_lines.append("Vandaag is relatief ontspannen, dus neem gerust tijd voor een extra stop.")
+    elif distance_km < 300:
+        advice_lines.append("Vandaag is een mooie gemiddelde rijdag: ideaal om vlot te vertrekken maar onderweg nog te stoppen.")
+    else:
+        advice_lines.append("Vandaag is een stevigere rit, dus vertrek best op tijd en hou je stops een beetje strak.")
+
+    if highlights:
+        advice_lines.append(f"Probeer zeker even te stoppen bij {highlights[0]['name']}.")
+
+    if hotel_row is not None and str(hotel_row.get("parking_notes", "")).strip():
+        advice_lines.append(f"Denk bij aankomst aan de parking: {hotel_row['parking_notes']}")
+
+    return "\n".join(advice_lines)
+
+def build_raw_facts_for_hotel(hotel_row) -> str:
+    if hotel_row is None:
+        return "Geen hotelinformatie gevonden voor deze dag."
+
+    return (
+        f"Hotelnaam: {hotel_row['hotel_name']}\n"
+        f"Stad: {hotel_row['city']}\n"
+        f"Adres: {hotel_row['address']}\n"
+        f"Boekingslink: {hotel_row['booking_url']}\n"
+        f"Check-in: {hotel_row['checkin_notes']}\n"
+        f"Parking: {hotel_row['parking_notes']}"
+    )
+
+
+def build_raw_facts_for_highlights(highlights: list) -> str:
+    if not highlights:
+        return "Nog geen highlights ingevoerd voor deze dag."
+
+    lines = []
+    for item in highlights[:3]:
+        lines.append(f"- {item['name']}: {item['description']}")
+
+    return "\n".join(lines)
+
+
+def build_raw_facts_for_route(day_number: int, day_row, gpx_data: dict) -> str:
+    distance_km = gpx_data["distance_km"]
+
+    title = f"Dag {day_number}"
+    start_name = "Onbekende startplaats"
+    end_name = "Onbekende eindplaats"
+    region_summary = "Geen extra routesamenvatting beschikbaar."
+    ride_style = "Rijdag"
+
+    if day_row is not None:
+        title = day_row["title"]
+        start_name = day_row["start_name"]
+        end_name = day_row["end_name"]
+        region_summary = day_row["region_summary"]
+        ride_style = day_row["ride_style"]
+
+    return (
+        f"Titel: {title}\n"
+        f"Start: {start_name}\n"
+        f"Einde: {end_name}\n"
+        f"Afstand: {distance_km} km\n"
+        f"Type dag: {ride_style}\n"
+        f"Samenvatting route: {region_summary}"
+    )
+
+
+def build_raw_facts_for_briefing(day_number: int, day_row, gpx_data: dict, hotel_row, highlights: list) -> str:
+    route_facts = build_raw_facts_for_route(day_number, day_row, gpx_data)
+    hotel_facts = build_raw_facts_for_hotel(hotel_row)
+    highlights_facts = build_raw_facts_for_highlights(highlights)
+
+    return (
+        f"ROUTE\n{route_facts}\n\n"
+        f"HOTEL\n{hotel_facts}\n\n"
+        f"HIGHLIGHTS\n{highlights_facts}"
+    )

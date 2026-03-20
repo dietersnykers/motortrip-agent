@@ -47,6 +47,9 @@ def detect_intent(user_input: str) -> str | None:
 
     if any(word in text for word in ["route", "afstand", "rijden", "traject"]):
         return "route"
+    
+    if any(word in text for word in ["advies", "raad", "aanraden", "tips", "opletten", "rekening mee houden"]):
+        return "advice"
 
     if any(word in text for word in ["briefing", "samenvatting", "vertel over", "wat mogen we verwachten"]):
         return "briefing"
